@@ -10,7 +10,7 @@
 <body>
     <div class="login-page">
         <h1><b>Login</b></h1>
-        <form action="/login" method="POST">
+        <form action="/v1/blogapp/login" method="POST">
             <input type="text" name="username" placeholder="Username" required />
             <input type="email" name="email" placeholder="Email" required />
             <div class="password-container">
@@ -18,7 +18,7 @@
                 <i class="fa-solid fa-eye-slash" id="togglepassword"></i>
             </div>
             <button type="submit">Login</button>
-            <p>Don't have an account? <a href="/signup">Sign up</a></p>
+            <p>Don't have an account? <a href="/v1/blogapp/signup">Sign up</a></p>
         </form>
     </div>
 </body>

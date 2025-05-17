@@ -69,3 +69,25 @@ a {
 a:hover {
   text-decoration: underline;
 }
+
+.blog {
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #ccc;
+}
+
+.blog h2 {
+  margin: 0;
+}
+
+.meta {
+  color: #777;
+  font-size: 0.9em;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  font-size: 1em;
+}
