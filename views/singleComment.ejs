@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div class="comment-container">
+        <div class="comment-author">
+            Comment by <%= comment.author.username %>
+        </div>
+
+        <div class="comment-content">
+            <%= comment.content %>
+        </div>
+
+        <div class="timestamps">
+            Created: <%= new Date(comment.createdAt).toLocaleString() %><br>
+            Updated: <%= new Date(comment.updatedAt).toLocaleString() %>
+        </div>
+    </div>
+</body>
+</html>

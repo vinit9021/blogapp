@@ -2,15 +2,16 @@ const express = require('express');
 const app = express();
 const path = require('path');
 const mongoose = require('mongoose');
+const session = require('express-session');
 mongoose.connect("mongodb://127.0.0.1:27017/blogapp",{
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => console.log("MongoDB connected"))
   .catch(err => console.error("Connection error", err));
 
-const user = require('./models/user');
-const post = require('./models/post');
-const comment = require('./models/comment');
+const User = require('./models/user');
+const Post = require('./models/post');
+const Comment = require('./models/comment');
 const methodOverride = require('method-override');
 app.use(methodOverride('_method'));
 
@@ -19,19 +20,28 @@ app.use(express.urlencoded({extended : true}));
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
 
+app.use(session({
+  secret: 'yourSecretKey',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 // 1 day
+  }
+}));
+
 app.get("/v1/blogapp", (req, res)=>{
     res.render("index");
-})
+});
 
 app.post("/v1/blogapp/login", (req, res)=>{
     const{username, email, password} = req.body;
     console.log("Login:", username, email, password);
     res.send("Login form submitted");
-})
+});
 
 app.get("/v1/blogapp/signup", (req, res)=>{
     res.render("signup");
-})
+});
 
 app.post("/v1/blogapp/signup", async (req, res)=>{
     const{username, email, password, confirmPassword} = req.body;
@@ -41,12 +51,12 @@ app.post("/v1/blogapp/signup", async (req, res)=>{
     }
 
     try{
-        const existingUser = await user.findOne({email});
+        const existingUser = await User.findOne({email});
         if(existingUser){
             return res.send('Email already registered');
         }
 
-        const newUser = new user({username, email, password});
+        const newUser = new User({username, email, password});
         await newUser.save();
         res.send("Account created");
         res.redirect("/");
@@ -60,7 +70,7 @@ app.post("/v1/blogapp/signup", async (req, res)=>{
 app.post('/v1/blogapp/posts', async (req, res) => {
   try {
     const { title, content, userId } = req.body;
-    const post = new post({ title, content, author: userId });
+    const post = new Post({ title, content, author: userId });
     await post.save();
     res.send('Post created!');
   } catch (err) {
@@ -71,7 +81,7 @@ app.post('/v1/blogapp/posts', async (req, res) => {
 // read all posts
 app.get('/v1/blogapp/posts', async (req, res) => {
     try{
-        const posts = await post.find()
+        const posts = await Post.find()
             .populate('author', 'username')
             .sort({createdAt : -1});
         res.render("posts", {posts});
@@ -86,7 +96,7 @@ app.get('/v1/blogapp/posts', async (req, res) => {
 app.get('/v1/blogapp/posts/:id', async (req, res) => {
     try{
         const postID = req.params.id;
-        const Post = await post.findById(postID);
+        const Post = await Post.findById(postID);
         if(!Post){
             return res.status(404).send("Post not found");
         }
@@ -102,11 +112,11 @@ app.put('v1/blogapp/posts/:id', async (req, res) => {
     const postID = req.params;
     const {title, content} = req.body;
     try{
-        const updatedPost = await post.findByIdAndUpdate(postID, {title, content}, {new : true}).populate('author', 'username');
+        const updatedPost = await Post.findByIdAndUpdate(postID, {title, content}, {new : true}).populate('author', 'username');
         if(!updatedPost){
             return res.status(404).send('Post not found');
         }
-        res.render('singlePost', { post: updatedPost });
+        res.render('updatedPost', { post: updatedPost });
     } catch (err){
         console.error("Error updating post:", err);
         res.status(500).send("Server error while updating post");
@@ -114,10 +124,13 @@ app.put('v1/blogapp/posts/:id', async (req, res) => {
 });
 
 // delete post
-app.delete('v1/blogapp/posts/:id', async (req, res) => {
-    const postID = req.params;
+app.delete('/v1/blogapp/posts/:id', async (req, res) => {
+    const postID = req.params.id;
     try{
-        const deletePost = await post.findByIdAndDelete(postID);
+        const deletedPost = await Post.findByIdAndDelete(postID);
+        if (!deletedPost) {
+            return res.status(404).send('Post not found');
+        }
         res.redirect('/v1/blogapp/posts');
     } catch (err){
         console.error('Error deleting post:', err);
@@ -125,7 +138,8 @@ app.delete('v1/blogapp/posts/:id', async (req, res) => {
     }
 });
 
-app.post('/comments', async (req, res) => {
+// create comment
+app.post('/v1/blogapp/comments', async (req, res) => {
   try {
     const { content, postId, userId } = req.body;
     const comment = new Comment({ content, post: postId, author: userId });
@@ -134,6 +148,64 @@ app.post('/comments', async (req, res) => {
   } catch (err) {
     res.status(500).send('Error creating comment');
   }
+});
+
+// read all comments of a single post
+app.get('/v1/blogapp/posts/:id/comments', async (req, res) => {
+    try{
+        const postID = req.params.id;
+        const comments = await Comment.find({post : postID}).populate('author', 'username');
+        res.render('comments', {comments});
+    } catch (err){
+        console.error(err);
+        res.status(500).send('Error fetching comments');
+    }
+});
+
+// read a single comment from a post
+app.get('/v1/blogapp/posts/:id1/comments/:id2', async (req, res) => {
+    try{
+        const postID = req.params.id1;
+        const commentID = req.params.id2;
+        const singleComment = await Comment.findOne({post : postID, _id : commentID}).populate('author', 'username');
+        res.render('comment', {comment : singleComment});
+    } catch (err){
+        console.error(err);
+        res.status(500).send('Error fetching comments');
+    }
+});
+
+// update a comment
+app.put('/v1/blogapp/posts/:id1/comments/:id2', async (req, res) => {
+    try{
+        const postID = req.params.id1;
+        const commentID = req.params.id2;
+        const { content } = req.body;
+        const updatedComment = await Comment.findOneAndUpdate({post : postID, _id : commentID}, {content}, {new : true}).populate('author', 'username');
+        if(!updatedComment){
+            return res.status(404).send("Comment not found or does not belong to the given post");
+        }
+        res.render('updatedComment', {comment : updatedComment});
+    } catch (err){
+        console.error("Error updating comment:", err);
+        res.status(500).send("Server error while updating comment");
+    }
+});
+
+// delete a comment
+app.delete('/v1/blogapp/posts/:id1/comments/:id2', async (req, res) => {
+    const postID = req.params.id1;
+    const commentID = req.params.id2;
+    try{
+        const deletedComment = await Comment.findOneAndDelete({post : postID, _id : commentID});
+        if (!deletedComment) {
+            return res.status(404).send('Comment not found');
+        }
+        res.redirect(`/v1/blogapp/posts/${postID}/comments`);
+    } catch (err){
+        console.error('Error deleting comment:', err);
+        res.status(500).send('Failed to delete comment');
+    }
 });
 
 app.listen(3000, () => {

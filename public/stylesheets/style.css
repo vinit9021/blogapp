@@ -91,3 +91,25 @@ input, textarea {
   margin: 10px 0;
   font-size: 1em;
 }
+
+.comment-container {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
+
+.comment-author {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+
+.comment-content {
+  margin: 10px 0;
+  font-size: 1.1em;
+}
+
+.timestamps {
+  font-size: 0.9em;
+  color: gray;
+}

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Comments</h1>
+    <ul>
+        <% comments.forEach(comment => { %>
+            <li>
+                <strong><%= comment.author.username %>:</strong> 
+                <br>
+                <%= comment.content %>
+                <br>
+                <small>Created at: <%= new Date(comment.createdAt).toLocaleString() %></small>
+                <br>
+                <small>Updated at: <%= new Date(comment.updatedAt).toLocaleString() %></small>
+            </li>
+        <% }) %>
+    </ul>
+</body>
+</html>
