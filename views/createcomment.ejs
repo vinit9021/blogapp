@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create Comment</title>
+</head>
+<body>
+  <h1>Create Comment for: <%= post.title %></h1>
+
+  <form action="/comments" method="POST">
+    <input type="hidden" name="postId" value="<%= post._id %>">
+    <input type="hidden" name="userId" value="<%= post.author._id %>"><!-- You can also pass session userId -->
+
+    <div>
+      <label for="content">Comment:</label><br/>
+      <textarea name="content" rows="5" cols="50"><%= oldInput.content || "" %></textarea>
+      <% if (errors.length > 0) { %>
+        <p style="color:red;"><%= errors[0].msg %></p>
+      <% } %>
+    </div>
+
+    <button type="submit">Add Comment</button>
+  </form>
+</body>
+</html>

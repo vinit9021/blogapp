@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Create a New Blog Post</h1>
+
+    <% if (errors.length > 0) { %>
+        <ul style="color: red;">
+            <% errors.forEach(error => { %>
+                <li><%= error.msg %></li>
+            <% }) %>
+        </ul>
+    <% } %>
+
+    <form action="/createpost" method="POST">
+        <label>Title:</label><br>
+        <input type="text" name="title" value="<%= oldInput.title || '' %>"><br><br>
+
+        <label>Content:</label><br>
+        <textarea name="content" rows="6" cols="40"><%= oldInput.content || '' %></textarea><br><br>
+
+        <button type="submit">Create Post</button>
+    </form>
+</body>
+</html>

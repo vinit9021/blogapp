@@ -16,7 +16,13 @@
                 Updated: <%= new Date(post.updatedAt).toLocaleDateString() %>
             </p>
             <p><%= post.content %></p>
+            <form action="/posts/<%= post._id %>/comments" method="get">
+                <button type="submit">Read Comments</button>
+            </form>
+            <form action="/posts/<%= post._id %>/comment" method="get" style="display:inline;">
+                <button type="submit">Create Comment</button>
+            </form>
         </div>
-    <% }) >
+    <% }) %>
 </body>
 </html>

@@ -8,7 +8,7 @@
 <body>
     <h1>Edit Comment</h1>
 
-    <form action="/v1/blogapp/posts/<%= post._id %>/comments/<%= comment._id %>?_method=PUT" method="POST">
+    <form action="/posts/<%= post._id %>/comments/<%= comment._id %>?_method=PUT" method="POST">
         <!-- <input type="text" name="title" value="<%= post.title %>" required> -->
         <textarea name="content" rows="6" required><%= comment.content %></textarea>
         <button type="submit">Update Comment</button>

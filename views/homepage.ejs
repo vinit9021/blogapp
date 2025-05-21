@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Home - Blog App</title>
+  <style>
+    .blog { border: 1px solid #ddd; padding: 1rem; margin-bottom: 1rem; }
+    .meta { font-size: 0.9rem; color: gray; }
+    .create-btn { margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Welcome to the Blog</h1>
+
+
+  <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+    <div class="message error"><%= errorMessage %></div>
+  <% } %>
+  <!-- Create Post Button -->
+  <div class="create-btn">
+    <a href="/createpost"><button>Create New Post</button></a>
+  </div>
+
+  <!-- Show all posts -->
+  <% posts.forEach(post => { %> 
+    <div class="blog">
+      <h2>
+        <a href="/posts/<%= post._id %>"><%= post.title %></a>
+      </h2>
+      <p class="meta">
+        by <%= post.author ? post.author.username : 'Unknown Author' %> |
+        Created: <%= new Date(post.createdAt).toLocaleDateString() %>
+      </p>
+      <p><%= post.content.substring(0, 150) %>...</p>
+      <a href="/posts/<%= post._id %>"><button>Read More</button></a>
+    </div>
+  <% }) %>
+</body>
+</html>
