@@ -18,9 +18,9 @@ body {
 
 h1 {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   color: #333;
-  font-size: larger;
+  font-size: x-large;
 }
 
 form {
@@ -59,6 +59,7 @@ button:hover {
 p {
   text-align: center;
   font-size: 14px;
+  margin-top : 5px;
 }
 
 a {
@@ -69,6 +70,128 @@ a {
 a:hover {
   text-decoration: underline;
 }
+
+/* Reset & base styles */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f9f9f9;
+  color: #333;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Header */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: #007bff;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.6rem 1.2rem;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background 0.3s;
+  font-size: 0.95rem;
+}
+
+.btn:hover {
+  background-color: #0056b3;
+}
+
+.btn.primary {
+  font-weight: bold;
+}
+
+/* Blog Cards */
+.blog-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.blog-card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s;
+}
+
+.blog-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.blog-card h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.4rem;
+}
+
+.blog-card a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.blog-card a:hover {
+  text-decoration: underline;
+}
+
+.meta {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 1rem;
+}
+
+.excerpt {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+/* Error Message */
+.message.error {
+  background-color: #ffe5e5;
+  color: #b30000;
+  padding: 0.8rem;
+  border: 1px solid #ffcccc;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .blog-card {
+    padding: 1rem;
+  }
+}
+
+
+
 
 .blog {
   margin-bottom: 30px;

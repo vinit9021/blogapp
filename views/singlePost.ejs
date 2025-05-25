@@ -1,50 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= post.title %> - Blog</title>
+  <link rel="stylesheet" href="/stylesheets/singlepost.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
 </head>
 <body>
-    <h1><%= post.title %></h1>
-    <p class="meta">
+  <div class="container">
+    <article class="blog-post">
+      <h1 class="title"><%= post.title %></h1>
+      <p class="meta">
         by <strong><%= post.author ? post.author.username : 'Unknown Author' %></strong> |
         Created: <%= new Date(post.createdAt).toLocaleDateString() %> |
         Updated: <%= new Date(post.updatedAt).toLocaleDateString() %>
-    </p>
-    <p><%= post.content %></p>
-    <% if (user && post.author && user._id.toString() === post.author._id.toString()) { %>
-        <form action="/posts/<%= post._id %>/edit" method="GET">
-            <button type="submit">Update</button>
-        </form>
-        <form action="/posts/<%= post._id %>?_method=DELETE" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this post?');">
-            <button type="submit" style="background-color: red; color: white;">Delete</button>
-        </form>
-    <% } %>
-    <h3><b>Comments</b></h3>
-    <% if (comments.length === 0) { %>
-        <p>No comments yet.</p>
-     <% } else { %>
-        <ul>
-            <% comments.forEach(comment => { %>
-                <li>
-                    <a href="/posts/<%= post._id %>/comments/<%= comment._id %>" style="color: inherit; text-decoration: none; cursor: pointer; display: block;">
-                        <strong><%= comment.author.username %></strong>: <%= comment.content %>
-                    </a>
-                </li>
-            <% }) %>
-        </ul>
-    <% } %>
-    <hr>
-    <h3>Add a Comment</h3>
+      </p>
+      <div class="content"><%= post.content %></div>
 
-    <% if (user) { %>
+      <% if (user && post.author && user._id.toString() === post.author._id.toString()) { %>
+        <div class="actions">
+          <form action="/posts/<%= post._id %>/edit" method="GET">
+            <button type="submit" class="btn edit">Update</button>
+          </form>
+          <form action="/posts/<%= post._id %>?_method=DELETE" method="POST" onsubmit="return confirm('Are you sure you want to delete this post?');">
+            <button type="submit" class="btn delete">Delete</button>
+          </form>
+        </div>
+      <% } %>
+    </article>
+
+    <section class="comments">
+      <h3>Comments</h3>
+      <% if (comments.length === 0) { %>
+        <p class="no-comments">No comments yet.</p>
+      <% } else { %>
+        <ul>
+          <% comments.forEach(comment => { %>
+            <li>
+              <a href="/posts/<%= post._id %>/comments/<%= comment._id %>">
+                <strong><%= comment.author.username %></strong>: <%= comment.content %>
+              </a>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </section>
+
+    <section class="add-comment">
+      <h3>Add a Comment</h3>
+      <% if (user) { %>
         <form action="/posts/<%= post._id %>/comment" method="POST">
-            <textarea name="content" rows="4" cols="50" placeholder="Write your comment here..." required></textarea><br>
-            <button type="submit">Add Comment</button>
+          <textarea name="content" rows="4" placeholder="Write your comment..." required></textarea>
+          <button type="submit" class="btn">Post Comment</button>
         </form>
-    <% } else { %>
+      <% } else { %>
         <p><a href="/login">Log in</a> to add a comment.</p>
-    <% } %>
+      <% } %>
+    </section>
+  </div>
+  <script src="/javascript/singlepost.js"></script>
 </body>
 </html>

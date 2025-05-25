@@ -1,0 +1,122 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f9f9f9;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 800px;
+  margin: 40px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 2em;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.meta {
+  font-size: 0.9em;
+  color: #777;
+  margin-bottom: 20px;
+}
+
+.content {
+  font-size: 1.1em;
+  line-height: 1.6;
+  margin-bottom: 30px;
+  color: #444;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+}
+
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: 0.3s;
+}
+
+.edit {
+  background-color: #007bff;
+  color: white;
+}
+
+.edit:hover {
+  background-color: #0056b3;
+}
+
+.delete {
+  background-color: #dc3545;
+  color: white;
+}
+
+.delete:hover {
+  background-color: #c82333;
+}
+
+.comments {
+  margin-top: 40px;
+}
+
+.comments ul {
+  list-style: none;
+  padding: 0;
+}
+
+.comments li {
+  margin-bottom: 12px;
+  background: #f1f1f1;
+  padding: 10px 15px;
+  border-radius: 6px;
+}
+
+.comments a {
+  text-decoration: none;
+  color: #333;
+}
+
+.comments a:hover {
+  text-decoration: underline;
+}
+
+.no-comments {
+  color: #777;
+}
+
+.add-comment {
+  margin-top: 40px;
+}
+
+textarea {
+  width: 100%;
+  max-width: 770px;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1em;
+  resize: vertical;
+  margin-bottom: 15px;
+  resize : none;
+}
+
+.add-comment .btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.add-comment .btn:hover {
+  background-color: #218838;
+}
+
