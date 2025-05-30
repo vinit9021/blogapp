@@ -21,7 +21,6 @@ app.use(express.urlencoded({extended : true}));
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
 
-
 // app.use(session({
 //   secret: 'yourSecretKey',
 //   resave: false,
@@ -60,7 +59,7 @@ app.get("/", (req, res)=>{
     try{
         res.render("login", { errors: [], oldInput: {}, generalError: null });
     } catch (err){
-        console.error("Error loadinf login page");
+        console.error("Error loading login page");
         res.send("Something went wrong. Try again.");
     }
 });
@@ -98,13 +97,10 @@ app.post("/login", [
       });
     }
 
-    // ✅ Create JWT token
     const token = generateToken(user);
 
-    // OPTIONAL: You can still set the session userId
     req.userID = user._id.toString();
 
-    // ✅ Store the token in a cookie or send as response (you choose)
     res.cookie('token', token, {
       httpOnly: true,       // prevent client-side JS from accessing it
       maxAge: 24 * 60 * 60 * 1000 // 1 day
@@ -118,7 +114,7 @@ app.post("/login", [
 
 app.get('/logout', (req, res) => {
   res.clearCookie('token');
-  res.redirect('/login');
+  res.redirect('/');
 });
 
 app.get("/signup", (req, res) => {
@@ -263,7 +259,6 @@ app.post('/createpost', authenticateToken, [
   }
 });
 
-
 // read all posts
 // app.get('/posts', async (req, res) => {
 //     try{
@@ -287,10 +282,9 @@ app.get('/posts/:id/edit', authenticateToken, async (req, res) => {
       return res.status(404).send('Post not found');
     }
 
-    // Ensure the user is logged in and is the author
     if (!req.userID || post.author._id.toString() !== req.userID) {
-      const user = await User.findById(req.userID); // Optional, in case the template uses it
-      const posts = await Post.find().populate('author'); // Fetch posts to pass to homepage
+      const user = await User.findById(req.userID);
+      const posts = await Post.find().populate('author');
 
       return res.render('homepage', {
         user,
@@ -299,7 +293,7 @@ app.get('/posts/:id/edit', authenticateToken, async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.userID); // Optional, if needed in update form
+    const user = await User.findById(req.userID);
 
     res.render('updatepost', {
       post,
@@ -345,7 +339,6 @@ app.put('/posts/:id', authenticateToken, [
   const { title, content } = req.body;
 
   if (!errors.isEmpty()) {
-    // Re-render the updatePost page with validation errors and old input
     const post = await Post.findById(postID).populate('author');
     return res.render('updatepost', {
       errors: errors.array(),
@@ -356,25 +349,27 @@ app.put('/posts/:id', authenticateToken, [
   }
 
   try {
-    const updatedPost = await Post.findByIdAndUpdate(
-      postID,
-      { title, content },
-      { new: true }
-    ).populate('author', 'username');
+    const post = await Post.findById(postID).populate('author');
 
-    if (!updatedPost) {
+    if (!post) {
       return res.status(404).send('Post not found');
     }
-    if (updatedPost.author._id.toString() !== req.userID) {
-        return res.status(403).send("You are not authorized to update this post");
-    }
-    res.redirect(`/posts/${postID}`);
 
+    if (post.author._id.toString() !== req.userID) {
+      return res.status(403).send("You are not authorized to update this post");
+    }
+
+    post.title = title;
+    post.content = content;
+    await post.save();
+
+    res.redirect(`/posts/${postID}`);
   } catch (err) {
     console.error("Error updating post:", err);
     res.status(500).send("Server error while updating post");
   }
 });
+
 
 // delete post
 app.delete(

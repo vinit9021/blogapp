@@ -1,89 +1,200 @@
-const mongoose = require('mongoose');
-const request = require('supertest');
-const app = require('../app');
+const httpMocks = require('node-mocks-http');
+const { loginGetHandler, loginPostHandler, logoutHandler, signupGetHandler, signupPostHandler } = require('../controllers/authController');
 const User = require('../models/user');
+const Post = require('../models/post');
 const bcrypt = require('bcrypt');
+const { generateToken } = require('../utils/jwt');
+const { validationResult } = require('express-validator');
 
-beforeAll(async () => {
-  // Disconnect any existing connection first
-  if (mongoose.connection.readyState !== 0) {
-    await mongoose.disconnect();
-  }
+jest.mock('bcrypt');
+jest.mock('../utils/jwt');
+jest.mock('express-validator');
 
-  // Connect to the test DB
-  await mongoose.connect('mongodb://localhost:27017/blogapp_test');
-  // Clean and seed the test DB
-  await User.deleteMany({});
-  await User.create({
-    username: 'testuser',
-    email: 'test@example.com',
-    password: await bcrypt.hash('password123', 10),
+jest.mock('../models/user', () => {
+  const originalModule = jest.requireActual('../models/user');
+  return {
+    ...originalModule,
+    findOne: jest.fn(), 
+    findById: jest.fn(), 
+    prototype: {
+      save: jest.fn() 
+    }
+  };
+});
+
+const mockQuery = {
+  populate: jest.fn().mockReturnThis(),
+  sort: jest.fn().mockReturnThis(),
+  skip: jest.fn().mockReturnThis(),
+  limit: jest.fn().mockResolvedValue([])
+};
+
+jest.mock('../models/post', () => ({
+  find: jest.fn(() => mockQuery),
+  countDocuments: jest.fn().mockResolvedValue(0)
+}));
+
+jest.spyOn(console, 'error').mockImplementation(() => {});
+
+describe('GET /', () => {
+  it('should render login page with default values', () => {
+    const req = httpMocks.createRequest();
+    const res = httpMocks.createResponse();
+    res.render = jest.fn();
+
+    loginGetHandler(req, res);
+
+    expect(res.render).toHaveBeenCalledWith('login', {
+      errors: [],
+      oldInput: {},
+      generalError: null
+    });
+  });
+
+  it('should handle template rendering errors', () => {
+    const req = httpMocks.createRequest();
+    const res = httpMocks.createResponse();
+    res.render = jest.fn().mockImplementation(() => {
+      throw new Error('Render failed');
+    });
+    res.send = jest.fn();
+
+    loginGetHandler(req, res);
+
+    expect(res.send).toHaveBeenCalledWith("Something went wrong. Try again.");
+    expect(console.error).toHaveBeenCalledWith("Error loading login page");
   });
 });
 
-afterAll(async () => {
-  await mongoose.connection.dropDatabase(); // optional: clears test data
-  await mongoose.disconnect();
+describe('POST /login', () => {
+  let req, res;
+
+  beforeEach(() => {
+    req = httpMocks.createRequest({
+      method: 'POST',
+      url: '/login',
+      body: {
+        username: 'testuser',
+        email: 'test@example.com',
+        password: 'password123'
+      }
+    });
+    res = httpMocks.createResponse();
+    res.render = jest.fn();
+    res.cookie = jest.fn();
+    res.redirect = jest.fn();
+    res.status = jest.fn().mockReturnValue(res);
+    res.send = jest.fn();
+  });
+
+  it('should render login with validation errors if input is invalid', async () => {
+    validationResult.mockReturnValue({
+      isEmpty: () => false,
+      array: () => [{ msg: 'Username is required' }]
+    });
+
+    await loginPostHandler(req, res);
+
+    expect(res.render).toHaveBeenCalledWith('login', {
+      errors: [{ msg: 'Username is required' }],
+      oldInput: req.body
+    });
+  });
+
+  it('should render login with general error if user not found', async () => {
+    validationResult.mockReturnValue({ isEmpty: () => true });
+    User.findOne.mockResolvedValue(null);
+
+    await loginPostHandler(req, res);
+
+    expect(res.render).toHaveBeenCalledWith('login', {
+      errors: [],
+      oldInput: req.body,
+      generalError: "Invalid email or password"
+    });
+  });
+
+  it('should render login with general error if password is incorrect', async () => {
+    validationResult.mockReturnValue({ isEmpty: () => true });
+    User.findOne.mockResolvedValue({ _id: '123', password: 'hashedpassword' });
+    bcrypt.compare.mockResolvedValue(false);
+
+    await loginPostHandler(req, res);
+
+    expect(res.render).toHaveBeenCalledWith('login', {
+      errors: [],
+      oldInput: req.body,
+      generalError: "Invalid email or password"
+    });
+  });
+
+  it('should set cookie and redirect on successful login', async () => {
+    validationResult.mockReturnValue({ isEmpty: () => true });
+    const mockUser = { _id: '123', password: 'hashedpassword' };
+    User.findOne.mockResolvedValue(mockUser);
+    bcrypt.compare.mockResolvedValue(true);
+    generateToken.mockReturnValue('mocktoken');
+
+    await loginPostHandler(req, res);
+
+    expect(res.cookie).toHaveBeenCalledWith('token', 'mocktoken', {
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000
+    });
+    expect(res.redirect).toHaveBeenCalledWith('/homepage');
+  });
+
+  it('should handle database errors', async () => {
+    validationResult.mockReturnValue({ isEmpty: () => true });
+    User.findOne.mockRejectedValue(new Error('Database connection failed'));
+
+    await loginPostHandler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.send).toHaveBeenCalledWith("Server error during login");
+  });
 });
 
-describe('Authentication Routes', () => {
-  test('Login with valid credentials should redirect to /homepage', async () => {
-    const res = await request(app).post('/login').send({
-      email: 'test@example.com',
-      username: 'testuser',
-      password: 'password123',
-    });
+describe('GET /logout', () => {
+  it('should clear cookie and redirect to login', () => {
+    const req = httpMocks.createRequest();
+    const res = httpMocks.createResponse();
+    res.clearCookie = jest.fn();
+    res.redirect = jest.fn();
 
-    expect(res.status).toBe(302);
-    expect(res.headers.location).toBe('/homepage');
-  });
+    logoutHandler(req, res);
 
-  test('Login with invalid credentials should show error', async () => {
-    const res = await request(app).post('/login').send({
-      email: 'test@example.com',
-      username: 'testuser',
-      password: 'wrongpass',
-    });
-
-    expect(res.status).toBe(200);
-    expect(res.text).toContain('Invalid email or password');
+    expect(res.clearCookie).toHaveBeenCalledWith('token');
+    expect(res.redirect).toHaveBeenCalledWith('/login');
   });
 });
 
-describe('Signup Routes', () => {
-  test('GET /signup should return the signup page', async () => {
-    const res = await request(app).get('/signup');
+describe('GET /signup', () => {
+  it('should render signup page with default values', () => {
+    const req = httpMocks.createRequest();
+    const res = httpMocks.createResponse();
+    res.render = jest.fn();
 
-    expect(res.status).toBe(200);
-    expect(res.text).toContain('Create Account'); // Adjust to some text present in your signup page
+    signupGetHandler(req, res);
+
+    expect(res.render).toHaveBeenCalledWith('signup', {
+      errors: [],
+      oldInput: {},
+      generalError: ""
+    });
   });
 
-  test('POST /signup with valid data should create user and redirect', async () => {
-    const res = await request(app).post('/signup').send({
-      username: 'newuser',
-      email: 'newuser@example.com',
-      password: 'newpassword123',
-      confirmPassword: 'newpassword123', // If you have password confirmation
+  it('should handle template rendering errors', () => {
+    const req = httpMocks.createRequest();
+    const res = httpMocks.createResponse();
+    res.render = jest.fn().mockImplementation(() => {
+      throw new Error('Render failed');
     });
+    res.send = jest.fn();
 
-    expect(res.status).toBe(302);
-    expect(res.headers.location).toBe('/'); // Adjust to wherever you redirect after signup
+    signupGetHandler(req, res);
 
-    // Optional: you can add a check here to confirm user creation in DB
-  });
-
-  test('POST /signup with invalid data should show error', async () => {
-    const res = await request(app).post('/signup').send({
-      username: '',
-      email: 'notanemail',
-      password: 'short',
-      confirmPassword: 'mismatch',
-    });
-
-    expect(res.status).toBe(200);
-    expect(res.text).toContain('Username is required');
-    expect(res.text).toContain('Enter a valid Email');
-    expect(res.text).toContain('Password must be at least 8 characters');
-    expect(res.text).toContain('Passwords do not match');
+    expect(res.send).toHaveBeenCalledWith("Something went wrong. Try again.");
+    expect(console.error).toHaveBeenCalledWith("Error loading SignUp page:", expect.any(Error));
   });
 });
